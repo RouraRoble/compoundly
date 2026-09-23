@@ -1,0 +1,159 @@
+---
+import Base from '../layouts/Base.astro';
+import Faq from '../components/Faq.astro';
+import AdSlot from '../components/AdSlot.astro';
+import MoreTools from '../components/MoreTools.astro';
+import Comparer from '../components/Comparer.tsx';
+import LastUpdated from '../components/LastUpdated.astro';
+import { site } from '../site.config';
+import { webAppLd } from '../lib/seo';
+import { withBase } from '../lib/url';
+import { calcSlug, investSlug } from '../lib/pages';
+import '../styles/tool.css';
+
+// A handful of popular, pre-computed pages — plus both hubs — so the 352-page pSEO catalogue is
+// reachable by clicking from the home page, not only via the header nav or the sitemap.
+const popular = [
+  { href: '/calculator/', label: 'Browse all calculator results' },
+  { href: '/invest/', label: 'Browse all monthly investing results' },
+  { href: `/calculator/${calcSlug(10000, 7, 20)}/`, label: '$10,000 at 7% for 20 years' },
+  { href: `/calculator/${calcSlug(50000, 8, 30)}/`, label: '$50,000 at 8% for 30 years' },
+  { href: `/invest/${investSlug(500, 7, 30)}/`, label: '$500/month at 7% for 30 years' },
+  { href: `/invest/${investSlug(200, 6, 20)}/`, label: '$200/month at 6% for 20 years' },
+];
+
+// Only show real, live affiliate items — a placeholder "#" href is dead UI (see audit P2).
+const affiliateItems = site.affiliate.enabled ? site.affiliate.items.filter((item) => item.href !== '#') : [];
+
+const faqs = [
+  {
+    q: 'Is this calculator free?',
+    a: 'Yes. Everything runs in your browser — no account, no sign-up, and nothing is uploaded.',
+  },
+  {
+    q: 'How is the interest actually compounded?',
+    a: 'Interest compounds at the frequency you pick (daily, monthly, quarterly or yearly). Contributions are added at the end of each contribution period, so the math matches a savings or brokerage statement, not a rounded rule-of-thumb.',
+  },
+  {
+    q: 'What does "difference from" mean in the comparison?',
+    a: 'We split the gap between two plans into what came from extra contributions and what came from growth (interest), so you can see whether the winning plan simply put in more money or actually earned more.',
+  },
+  {
+    q: 'Does the link really reproduce my exact comparison?',
+    a: 'Yes. Every number — names, amounts, rates, compounding, years, contribution increases and inflation — is encoded in the URL. Bookmark it, paste it in a message, or open it on another device and you’ll see the same chart and table.',
+  },
+  {
+    q: 'Is this financial advice?',
+    a: 'No. Compoundly projects the math of compound growth from the numbers you enter; it does not recommend a rate of return, a product, or a provider. See the methodology on the About page.',
+  },
+];
+---
+
+<Base
+  title="Compound Interest Calculator — Compare 3 Plans"
+  description={site.description}
+  jsonLd={webAppLd({ features: ['Compare up to 3 savings or investing scenarios', 'URL-state sharing', 'CSV export', 'Year-by-year table', 'Inflation-adjusted real value'], datePublished: site.launched })}
+>
+  <section class="hero container">
+    <p class="eyebrow">Free · No sign-up</p>
+    <h1>{site.tagline}</h1>
+    <p class="lead">Enter up to three plans — a savings account, an index fund, anything with a rate and a timeframe — and see exactly how far each one gets you, year by year. The whole comparison lives in the link, so sharing it is one click.</p>
+    <LastUpdated date={site.launched} label="Formulas last updated" />
+  </section>
+
+  <section class="container" aria-label="Calculator">
+    <Comparer client:load />
+  </section>
+
+  <AdSlot slot="home-below-results" minHeight={90} />
+
+  {affiliateItems.length > 0 && (
+    <section class="container container--narrow section">
+      <h2>Where to actually earn this rate</h2>
+      <p class="muted small">{site.affiliate.disclosure}</p>
+      <ul class="affiliate-list">
+        {affiliateItems.map((item) => (
+          <li>
+            <a href={item.href} rel="sponsored noopener" target="_blank">{item.name}</a>
+            <span class="muted"> — {item.blurb}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="container container--narrow section">
+    <h2>Popular results</h2>
+    <p class="muted small">Every one of Compoundly's 350+ pre-computed pages is linked from the sitemap; these are a starting point.</p>
+    <ul class="popular-list">
+      {popular.map((item) => (
+        <li><a href={withBase(item.href)}>{item.label}</a></li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="container container--narrow section">
+    <h2>How Compoundly works</h2>
+    <ol>
+      <li>Set the starting amount, contribution, rate, compounding and years for Plan A — add Plan B or C to compare.</li>
+      <li>Read the headline cards, the chart and the plain-English difference between plans.</li>
+      <li>Copy the link (or export the table as CSV) — it reproduces the exact comparison, every time.</li>
+    </ol>
+    <p>
+      Want the formulas behind the numbers? Read <a href={withBase('/about/')}>the methodology</a>, or the explainers on
+      <a href={withBase('/rule-of-72/')}>the rule of 72</a>, <a href={withBase('/apy-vs-apr/')}>APY vs APR</a> and
+      <a href={withBase('/how-compound-interest-works/')}>how compound interest works</a>. Saving toward a specific goal? See
+      <a href={withBase('/how-long-to-save-1-million/')}>how long it takes to save $1,000,000</a>, by monthly amount and rate.
+    </p>
+  </section>
+
+  <section class="container container--narrow section">
+    <Faq items={faqs} />
+  </section>
+
+  <MoreTools />
+</Base>
+
+<style>
+  .hero {
+    padding-block: var(--space-12) var(--space-8);
+  }
+  .lead {
+    font-size: var(--text-lg);
+    color: var(--fg-muted);
+    max-width: 62ch;
+  }
+  .affiliate-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+  .affiliate-list li {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-elevated);
+  }
+  .popular-list {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-3) 0 0;
+    display: grid;
+    gap: var(--space-2);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  }
+  .popular-list a {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-elevated);
+    text-decoration: none;
+    color: var(--fg);
+    font-size: var(--text-sm);
+  }
+  .popular-list a:hover {
+    border-color: var(--accent);
+  }
+</style>

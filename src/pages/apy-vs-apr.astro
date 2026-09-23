@@ -1,0 +1,92 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Faq from '../components/Faq.astro';
+import MoreTools from '../components/MoreTools.astro';
+import LastUpdated from '../components/LastUpdated.astro';
+import { site } from '../site.config';
+import { articleLd } from '../lib/seo';
+import { apyFromApr, COMPOUNDING_LABEL, type Compounding } from '../lib/compound';
+import { withBase } from '../lib/url';
+
+const title = 'APY vs APR: What’s the Difference?';
+const description = 'APR is the nominal annual rate; APY is what you actually earn once compounding is included. See the formula and a side-by-side table for common rates.';
+
+const compoundings: Compounding[] = ['y', 'q', 'm', 'd'];
+const sampleRates = [1, 2, 3, 4, 5, 6, 7, 8, 10];
+
+const faqs = [
+  { q: 'Which number should I compare when shopping for a savings account?', a: 'APY — it already accounts for compounding, so it tells you what you will actually earn in a year on a given balance. Two accounts with the same APR but different compounding frequencies will have different APYs.' },
+  { q: 'Which number do lenders advertise, and why?', a: 'Loans and credit cards are usually quoted in APR. Because APY is always ≥ APR for the same nominal rate (when compounding more than once a year), APR looks smaller and is the more common way to advertise borrowing costs.' },
+  { q: 'Is APY the same as your "annual return" input in the calculator?', a: 'Compoundly’s "annual return" field is a nominal rate (like APR): you also choose a compounding frequency, and the calculator compounds it internally — you do not need to convert to APY yourself.' },
+  { q: 'Does APY include fees?', a: 'No. APY reflects compounding only. Account fees, taxes and, for loans, additional charges rolled into the APR (like points or origination fees) are separate and not part of either figure here.' },
+];
+---
+
+<Base title={title} description={description} jsonLd={articleLd({ headline: title, description, url: '/apy-vs-apr/', datePublished: site.launched, dateModified: site.launched })}>
+  <article class="container container--narrow section prose">
+    <Breadcrumbs items={[{ name: 'Home', url: '/' }, { name: 'APY vs APR', url: '/apy-vs-apr/' }]} />
+    <h1>{title}</h1>
+    <LastUpdated date={site.launched} />
+    <p class="lead">
+      <strong>APR (annual percentage rate) is the nominal rate before compounding. APY (annual percentage yield) is the
+      effective rate you actually earn or pay once compounding is included.</strong> APY is always greater than or equal
+      to APR for the same nominal rate, and the gap grows with more frequent compounding.
+    </p>
+
+    <section aria-labelledby="formula-title">
+      <h2 id="formula-title">The formula</h2>
+      <p>
+        For a nominal annual rate <code>r</code> compounded <code>n</code> times a year:
+      </p>
+      <p><code>APY = (1 + r/n)^n − 1</code></p>
+      <p>
+        As <code>n</code> increases — quarterly, monthly, daily — APY rises for the same APR, because each compounding
+        period's interest starts earning its own interest sooner. At <code>n = 1</code> (yearly compounding), APY equals APR.
+      </p>
+    </section>
+
+    <section aria-labelledby="table-title">
+      <h2 id="table-title">APY for common APRs, by compounding frequency</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">APR</th>
+              {compoundings.map((c) => <th scope="col">{COMPOUNDING_LABEL[c]}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {sampleRates.map((rate) => (
+              <tr>
+                <th scope="row">{rate}%</th>
+                {compoundings.map((c) => <td>{apyFromApr(rate, c).toFixed(3)}%</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted small">Each cell is the APY produced by that APR compounded at that frequency, via <code>APY = (1 + APR/n)^n − 1</code>.</p>
+    </section>
+
+    <section aria-labelledby="use-title">
+      <h2 id="use-title">Using this in the calculator</h2>
+      <p>
+        Compoundly's <a href={withBase('/')}>comparison calculator</a> takes a nominal annual rate plus a compounding frequency for
+        each plan — the same two numbers this table uses — and projects the full year-by-year balance, including
+        contributions. If an account advertises its APY directly, set the calculator's compounding to <strong>yearly</strong>
+        and enter the APY as the rate; the two are equal by definition at yearly compounding.
+      </p>
+    </section>
+
+    <Faq items={faqs} />
+  </article>
+
+  <MoreTools />
+</Base>
+
+<style>
+  .lead {
+    font-size: var(--text-lg);
+  }
+</style>

@@ -1,0 +1,176 @@
+---
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import Faq from '../../components/Faq.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import MoreTools from '../../components/MoreTools.astro';
+import LastUpdated from '../../components/LastUpdated.astro';
+import Chart from '../../components/Chart.tsx';
+import { site } from '../../site.config';
+import { webAppLd } from '../../lib/seo';
+import { withBase } from '../../lib/url';
+import { money, years as yearsLabel } from '../../lib/format';
+import { singleScenarioQuery } from '../../lib/state';
+import {
+  investPages,
+  investScenario,
+  investResult,
+  investNeighbours,
+  investToCalc,
+  type InvestPage,
+} from '../../lib/pages';
+
+export function getStaticPaths() {
+  return investPages().map((page) => ({ params: { slug: page.slug }, props: { page } }));
+}
+
+interface Props {
+  page: InvestPage;
+}
+const { page } = Astro.props as Props;
+const scenario = investScenario(page);
+const result = investResult(page);
+const neighbours = investNeighbours(page);
+const calc = investToCalc(page);
+
+const monthlyStr = money(page.monthly, 'USD', 0);
+const title = `${monthlyStr}/Month at ${page.rate}% for ${page.years} Years — Investment Result`;
+const description = `Investing ${monthlyStr} a month at ${page.rate}% annual return for ${page.years} years grows to ${money(result.finalBalance)}, of which ${money(result.totalInterest)} is compound growth.`;
+const calcUrl = `/?${singleScenarioQuery(scenario)}`;
+
+const faqs = [
+  {
+    q: `How much do I end up with investing ${monthlyStr}/month at ${page.rate}% for ${yearsLabel(page.years)}?`,
+    a: `${money(result.finalBalance)} — ${money(result.totalInvested)} of that is your own contributions and ${money(result.totalInterest)} is investment growth, assuming a constant ${page.rate}% annual return, compounded monthly, with deposits at the end of each month.`,
+  },
+  {
+    q: 'What if I have a lump sum to invest instead of monthly contributions?',
+    a: calc
+      ? `See <a href="${withBase(`/calculator/${calc.slug}/`)}">${money(calc.amount, 'USD', 0)} at ${calc.rate}% for ${calc.years} years</a>, or open the <a href="${withBase(calcUrl)}">full calculator</a> and set the contribution to 0 with your own starting amount.`
+      : `Open the <a href="${withBase(calcUrl)}">full calculator</a> and set the contribution to 0 with your own starting amount instead.`,
+  },
+  {
+    q: 'Does this increase my contribution over time?',
+    a: 'No — this page assumes a flat monthly contribution with no increase. To model a contribution that grows every year (e.g. with a raise), open the full calculator and set a contribution increase percentage.',
+  },
+  {
+    q: 'Is this financial advice?',
+    a: `No. This is a mechanical projection at a fixed ${page.rate}% annual return; real investment returns vary year to year and are never guaranteed. See <a href="${withBase('/about/')}">the methodology</a>.`,
+  },
+];
+---
+
+<Base
+  title={title}
+  description={description}
+  image={`/og/invest/${page.slug}.png`}
+  imageAlt={`${monthlyStr}/month at ${page.rate}% for ${page.years} years grows to ${money(result.finalBalance)}`}
+  jsonLd={webAppLd({ name: `${monthlyStr}/month at ${page.rate}% for ${page.years} years`, description, url: `/invest/${page.slug}/`, datePublished: site.launched })}
+>
+  <article class="container container--narrow section prose">
+    <Breadcrumbs items={[{ name: 'Home', url: '/' }, { name: 'Invest', url: '/invest/' }, { name: `${monthlyStr}/mo at ${page.rate}%, ${page.years}y`, url: `/invest/${page.slug}/` }]} />
+    <h1>{monthlyStr}/month at {page.rate}% for {yearsLabel(page.years)}</h1>
+    <LastUpdated date={site.launched} />
+    <p class="lead">
+      <strong>Investing {monthlyStr} a month at {page.rate}% for {page.years} years grows to {money(result.finalBalance)}</strong> —
+      {money(result.totalInvested)} contributed, plus {money(result.totalInterest)} in compound growth, with monthly
+      compounding and no starting balance.
+    </p>
+
+    <Chart series={[{ key: 'a', name: `${monthlyStr}/mo at ${page.rate}%`, color: 'var(--series-b)', result }]} currency="USD" />
+
+    <p><a class="btn" href={withBase(calcUrl)}>Open this in the calculator →</a></p>
+
+    <AdSlot slot="invest-page-mid" minHeight={90} />
+
+    <h2>Year-by-year balance</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Year</th>
+            <th scope="col">Contributed this year</th>
+            <th scope="col">Interest this year</th>
+            <th scope="col">Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {result.rows.map((row) => (
+            <tr>
+              <th scope="row">{row.year}</th>
+              <td>{money(row.contributed)}</td>
+              <td>{money(row.interest)}</td>
+              <td>{money(row.balance)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {result.milestones.length > 0 && (
+      <>
+        <h2>Milestones</h2>
+        <ul>
+          {result.milestones.map((m) => (
+            <li>{m.label}: year {m.year} ({money(m.balance)})</li>
+          ))}
+        </ul>
+      </>
+    )}
+
+    <h2>Compare nearby scenarios</h2>
+    <div class="neighbour-grid">
+      <div>
+        <h3>Other rates, same amount &amp; years</h3>
+        <ul>
+          {neighbours.rates.map((n) => <li><a href={withBase(`/invest/${n.slug}/`)}>{n.rate}%</a></li>)}
+        </ul>
+      </div>
+      <div>
+        <h3>Other timeframes, same amount &amp; rate</h3>
+        <ul>
+          {neighbours.years.map((n) => <li><a href={withBase(`/invest/${n.slug}/`)}>{yearsLabel(n.years)}</a></li>)}
+        </ul>
+      </div>
+      <div>
+        <h3>Other monthly amounts, same rate &amp; years</h3>
+        <ul>
+          {neighbours.monthly.map((n) => <li><a href={withBase(`/invest/${n.slug}/`)}>{money(n.monthly, 'USD', 0)}</a></li>)}
+        </ul>
+      </div>
+    </div>
+
+    <Faq items={faqs} />
+  </article>
+
+  <MoreTools />
+</Base>
+
+<style>
+  .lead {
+    font-size: var(--text-lg);
+  }
+  .neighbour-grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    margin: var(--space-4) 0;
+  }
+  .neighbour-grid ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .neighbour-grid a {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-decoration: none;
+    font-size: var(--text-sm);
+  }
+</style>

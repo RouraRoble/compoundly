@@ -1,0 +1,176 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Faq from '../components/Faq.astro';
+import MoreTools from '../components/MoreTools.astro';
+import LastUpdated from '../components/LastUpdated.astro';
+import { site } from '../site.config';
+import { articleLd, howToLd } from '../lib/seo';
+import { doublingTime, ruleOf72 } from '../lib/compound';
+import { withBase } from '../lib/url';
+
+const title = 'Rule of 72: Estimate Doubling Time Fast';
+const description = 'The rule of 72 estimates how many years it takes an investment to double: divide 72 by the annual rate. Try your own rate and see the exact answer.';
+const rows = [3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20].map((rate) => ({
+  rate,
+  approx: ruleOf72(rate),
+  exact: doublingTime(rate, 'y'),
+}));
+
+const faqs = [
+  { q: 'Why 72 and not 70 or 69?', a: '69.3 is the mathematically exact constant for continuous compounding (ln 2 × 100). 72 is used instead because it divides evenly by more small numbers (2, 3, 4, 6, 8, 9, 12), which makes the mental math easier, at the cost of a little accuracy for annual compounding at typical rates.' },
+  { q: 'Does the rule of 72 work for any rate?', a: 'It is most accurate between roughly 6% and 10%. Outside that range — very low or very high rates — the estimate drifts further from the exact doubling time, so use the exact formula (shown above) when precision matters.' },
+  { q: 'Does compounding frequency change the doubling time?', a: 'Yes, slightly. More frequent compounding (daily vs. yearly) at the same nominal rate reaches double a little faster, because each period’s interest starts earning its own interest sooner. Compoundly’s calculator lets you set the compounding frequency directly.' },
+  { q: 'How is this different from the full comparison calculator?', a: 'This page answers one question — "how long to double?" — for a single rate. The Compoundly calculator projects a full year-by-year balance for up to three plans, including contributions, contribution growth and inflation.' },
+];
+---
+
+<Base
+  title={title}
+  description={description}
+  jsonLd={[
+    articleLd({ headline: title, description, url: '/rule-of-72/', datePublished: site.launched, dateModified: site.launched }),
+    howToLd({
+      name: 'Estimate how long it takes money to double',
+      description: 'Use the rule of 72 to estimate doubling time from an annual rate of return.',
+      steps: [
+        { name: 'Take the annual rate', text: 'Use the nominal annual percentage rate, e.g. 6 for 6%.' },
+        { name: 'Divide 72 by the rate', text: '72 ÷ 6 = 12 — the estimated number of years to double.' },
+        { name: 'Check the exact figure', text: 'For a precise answer, compute ln(2) ÷ ln(1 + rate), which accounts for compounding exactly.' },
+      ],
+      datePublished: site.launched,
+      dateModified: site.launched,
+    }),
+  ]}
+>
+  <article class="container container--narrow section prose">
+    <Breadcrumbs items={[{ name: 'Home', url: '/' }, { name: 'Rule of 72', url: '/rule-of-72/' }]} />
+    <h1>{title}</h1>
+    <LastUpdated date={site.launched} />
+    <p class="lead">
+      <strong>The rule of 72 is a mental-math shortcut: divide 72 by the annual growth rate to estimate how many years it
+      takes an amount to double.</strong> At 6% a year, money roughly doubles in 72 ÷ 6 = <strong>12 years</strong>.
+    </p>
+
+    <section aria-labelledby="try-it">
+      <h2 id="try-it">Try your own rate</h2>
+      <div class="card doubling-tool" data-doubling-tool>
+        <label for="rate-input">Annual rate of return</label>
+        <div class="input-suffix doubling-tool__input">
+          <input id="rate-input" type="number" inputMode="decimal" min="0.1" max="50" step="0.1" value="7" />
+          <span aria-hidden="true">%</span>
+        </div>
+        <p class="doubling-tool__result" role="status" aria-live="polite" data-result>
+          At 7%, money doubles in about <strong>10.3 years</strong> (rule of 72) — the exact figure is <strong>10.24 years</strong> with yearly compounding.
+        </p>
+      </div>
+    </section>
+
+    <section aria-labelledby="table-title">
+      <h2 id="table-title">Doubling time by rate</h2>
+      <p>Approximate (rule of 72) vs. exact (yearly compounding), for common rates:</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Annual rate</th>
+              <th scope="col">Rule of 72 estimate</th>
+              <th scope="col">Exact doubling time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr>
+                <th scope="row">{r.rate}%</th>
+                <td>{r.approx.toFixed(1)} years</td>
+                <td>{r.exact.toFixed(2)} years</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="how-title">
+      <h2 id="how-title">Where the formula comes from</h2>
+      <p>
+        Exact doubling time solves <code>(1 + r)^t = 2</code> for <code>t</code>, giving <code>t = ln(2) / ln(1 + r)</code>.
+        Because <code>ln(1 + r) ≈ r</code> for small <code>r</code>, and <code>ln(2) ≈ 0.693</code>, the doubling time is
+        approximately <code>0.693 / r</code>, or as a percentage, <code>69.3 / rate</code>. Rounding 69.3 up to 72 trades a
+        little accuracy for a divisor with far more whole-number factors (72 = 8 × 9 = 6 × 12 = 4 × 18…), which is why the
+        rule of 72 — not 69 or 70 — became the standard shortcut.
+      </p>
+      <p>
+        Source: the underlying compound-growth formula is the same one used by the
+        {' '}<a href="https://www.investor.gov/introduction-investing/investing-basics/compound-interest-calculator" rel="noopener">U.S. SEC Investor.gov compound interest calculator</a>. See
+        {' '}<a href={withBase('/about/')}>Compoundly's methodology</a> for the exact conventions used across this site.
+      </p>
+    </section>
+
+    <section aria-labelledby="use-title">
+      <h2 id="use-title">Use it in the full calculator</h2>
+      <p>
+        The rule of 72 answers one question. To see a full year-by-year balance — with contributions, contribution growth
+        and inflation — open the <a href={withBase('/')}>comparison calculator</a>, or jump straight to a worked example like
+        {' '}<a href={withBase('/calculator/10000-at-7-percent-for-20-years/')}>$10,000 at 7% for 20 years</a>.
+      </p>
+    </section>
+
+    <Faq items={faqs} />
+  </article>
+
+  <MoreTools />
+</Base>
+
+<script>
+  import { doublingTime, ruleOf72 } from '../lib/compound';
+
+  const root = document.querySelector<HTMLElement>('[data-doubling-tool]');
+  const input = root?.querySelector<HTMLInputElement>('#rate-input');
+  const result = root?.querySelector<HTMLElement>('[data-result]');
+
+  function clampRate(v: number): number {
+    if (!Number.isFinite(v)) return 7;
+    return Math.min(50, Math.max(0.1, v));
+  }
+
+  function render() {
+    if (!input || !result) return;
+    const rate = clampRate(input.valueAsNumber);
+    const approx = ruleOf72(rate);
+    const exact = doublingTime(rate, 'y');
+    result.innerHTML = '';
+    result.append(
+      `At ${rate}%, money doubles in about `,
+      strong(`${approx.toFixed(1)} years`),
+      ' (rule of 72) — the exact figure is ',
+      strong(`${exact.toFixed(2)} years`),
+      ' with yearly compounding.',
+    );
+  }
+  function strong(text: string): HTMLElement {
+    const el = document.createElement('strong');
+    el.textContent = text;
+    return el;
+  }
+
+  input?.addEventListener('input', render);
+</script>
+
+<style>
+  .lead {
+    font-size: var(--text-lg);
+  }
+  .doubling-tool {
+    display: grid;
+    gap: var(--space-3);
+    max-width: 28rem;
+  }
+  .doubling-tool__input {
+    max-width: 10rem;
+  }
+  .doubling-tool__result {
+    margin: 0;
+    font-size: var(--text-base);
+  }
+</style>

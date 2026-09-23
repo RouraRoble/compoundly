@@ -1,0 +1,23 @@
+---
+/**
+ * Visible freshness signal for every programmatic/tool page (POST_MVP_PLAN AEO scan gap: only 3
+ * of 363 pages showed a visible "last updated" date, even though most set a `dateModified` nowhere
+ * at all). Pair with a `dateModified` in the page's JSON-LD (see `lib/seo.ts`) — the date shown
+ * here should match it.
+ */
+interface Props {
+  date: string;
+  label?: string;
+}
+const { date, label = 'Data updated' } = Astro.props;
+---
+
+<p class="muted small last-updated">
+  {label}: <time datetime={date}>{date}</time>
+</p>
+
+<style>
+  .last-updated {
+    margin: 0 0 var(--space-3);
+  }
+</style>

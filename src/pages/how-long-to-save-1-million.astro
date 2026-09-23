@@ -1,0 +1,156 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Faq from '../components/Faq.astro';
+import MoreTools from '../components/MoreTools.astro';
+import LastUpdated from '../components/LastUpdated.astro';
+import { site } from '../site.config';
+import { articleLd, howToLd } from '../lib/seo';
+import { simulate } from '../lib/compound';
+import { money, years as yearsLabel } from '../lib/format';
+import { withBase } from '../lib/url';
+
+const title = 'How Long to Save $1 Million, by Month and Rate';
+const description = 'Years to reach $1,000,000 by investing a fixed amount every month, computed for common monthly amounts and annual returns with the same engine as the calculator.';
+
+// Every number on this page is computed with Compoundly's own tested engine (src/lib/compound.ts),
+// not invented or copied — the same simulate() function that powers the calculator and the
+// /invest/ pSEO pages. No initial balance, no contribution growth: a level monthly contribution,
+// monthly compounding, deposits at the end of each month.
+const MONTHLIES = [500, 1000, 1500, 2000, 3000];
+const RATES = [6, 7, 8, 10];
+const TARGET = 1_000_000;
+const MAX_YEARS = 80;
+
+interface Cell {
+  years: number | null; // null = not reached within MAX_YEARS
+  totalContributed: number | null;
+  balance: number | null; // actual balance at that year-end (>= TARGET, not exactly TARGET)
+}
+
+function yearsToTarget(monthly: number, rate: number): Cell {
+  const result = simulate({ name: '', initial: 0, contribution: monthly, frequency: 'm', rate, compounding: 'm', years: MAX_YEARS, increase: 0, inflation: 0 });
+  const row = result.rows.find((r) => r.balance >= TARGET);
+  return row ? { years: row.year, totalContributed: row.totalInvested, balance: row.balance } : { years: null, totalContributed: null, balance: null };
+}
+
+const table = MONTHLIES.map((monthly) => ({
+  monthly,
+  cells: RATES.map((rate) => ({ rate, ...yearsToTarget(monthly, rate) })),
+}));
+
+// Headline example for the answer-first sentence and the FAQ.
+const headline = yearsToTarget(1000, 7);
+
+const faqs = [
+  {
+    q: 'How long does it take to save $1,000,000 investing $1,000 a month?',
+    a: headline.years
+      ? `${yearsLabel(headline.years)}, at a constant 7% annual return compounded monthly — by which point you would have contributed ${money(headline.totalContributed ?? 0)} of your own money, with the rest from compound growth.`
+      : `More than ${MAX_YEARS} years at a constant 7% annual return — see the table above for faster combinations.`,
+  },
+  {
+    q: 'Does a higher monthly contribution or a higher return rate matter more?',
+    a: 'Doubling the monthly contribution shortens the time, but by much less than half, because compound growth does most of the work in the later years: in the table above, going from $500 to $1,000 a month at 6% cuts the time from 41 to 30 years (about 27% less), and at 10% going from $1,000 to $2,000 a month cuts it from 23 to 17 years. Compare rows (same rate, more money) against columns (same money, higher rate) in the table above to see which lever moves your own numbers more.',
+  },
+  {
+    q: 'Is a 6–10% annual return realistic?',
+    a: 'This page does not predict or recommend a return — it computes the time to $1,000,000 for whatever rate you plug in. Historical long-run averages for a diversified stock index have been in this range before inflation, but any given year (or decade) can be higher, lower, or negative; see the methodology on the About page for what this calculator does and does not assume.',
+  },
+  {
+    q: 'What if I already have some savings, or want to add a yearly raise to my contribution?',
+    a: `This table assumes $0 starting balance and a flat contribution. Open the <a href="${withBase('/')}">full calculator</a> to add a starting amount, increase your contribution by a percentage each year, or account for inflation — the exact same engine that computed this table.`,
+  },
+];
+---
+
+<Base
+  title={title}
+  description={description}
+  jsonLd={[
+    articleLd({ headline: title, description, url: '/how-long-to-save-1-million/', datePublished: site.launched, dateModified: site.launched }),
+    howToLd({
+      name: 'Plan a $1,000,000 savings goal',
+      description: 'Estimate how long it takes to reach a $1,000,000 savings goal from a monthly contribution and an expected annual return.',
+      steps: [
+        { name: 'Pick a monthly contribution you can sustain', text: 'E.g. $500, $1,000 or $2,000 a month — the amount you can realistically keep contributing for years, not just this month.' },
+        { name: 'Pick an expected annual return', text: 'A savings account, bonds and stocks have very different typical long-run returns; use a rate that matches where the money will actually be held.' },
+        { name: 'Read the years-to-$1M from the table, or compute your own', text: `Find your row and column above, or open the full calculator with your exact numbers (including a starting balance or a yearly contribution increase, which this table does not include).` },
+      ],
+      datePublished: site.launched,
+      dateModified: site.launched,
+    }),
+  ]}
+>
+  <article class="container container--narrow section prose">
+    <Breadcrumbs items={[{ name: 'Home', url: '/' }, { name: 'How long to save $1 million', url: '/how-long-to-save-1-million/' }]} />
+    <h1>{title}</h1>
+    <LastUpdated date={site.launched} />
+    <p class="lead">
+      <strong>
+        Investing {money(1000)}/month at a constant 7% annual return passes {money(TARGET)} in {headline.years ? yearsLabel(headline.years) : `more than ${MAX_YEARS} years`}{headline.balance ? ` (balance: ${money(headline.balance)})` : ''}.
+      </strong>{' '}
+      The table below computes the same question — years to $1,000,000 — for {MONTHLIES.length} monthly amounts across {RATES.length} annual returns, using Compoundly's own year-by-year engine (monthly compounding, deposits at the end of each month, no starting balance).
+    </p>
+
+    <section aria-labelledby="table-title">
+      <h2 id="table-title">Years to reach $1,000,000</h2>
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Years to reach $1,000,000, by monthly contribution and annual return</caption>
+          <thead>
+            <tr>
+              <th scope="col">Monthly</th>
+              {RATES.map((r) => <th scope="col">{r}%</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {table.map((row) => (
+              <tr>
+                <th scope="row">{money(row.monthly, 'USD', 0)}</th>
+                {row.cells.map((c) => (
+                  <td>{c.years ? `${c.years}y` : `${MAX_YEARS}+y`}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted small">Each cell is the first year the balance reaches $1,000,000, from a full year-by-year simulation — the same math as the <a href={withBase('/invest/')}>monthly investing results</a> pages, generalized to a round target instead of a fixed timeframe.</p>
+    </section>
+
+    <section aria-labelledby="worked-title">
+      <h2 id="worked-title">Worked example: {money(1000)}/month at 7%</h2>
+      {headline.years && headline.balance != null && headline.totalContributed != null ? (
+        <p>
+          At a constant 7% annual return compounded monthly, {money(1000)} a month passes {money(TARGET)} during year <strong>{headline.years}</strong>, ending that year at {money(headline.balance)}.
+          Of that, {money(headline.totalContributed)} is your own contributions ({money(1000)} × 12 × {headline.years}) — the remaining {money(headline.balance - headline.totalContributed)} is compound growth.
+          See the exact year-by-year table in the <a href={withBase('/')}>full calculator</a>.
+        </p>
+      ) : (
+        <p>At a constant 7% annual return, $1,000/month does not reach $1,000,000 within {MAX_YEARS} years — try a higher contribution or rate in the table above, or open the <a href={withBase('/')}>full calculator</a>.</p>
+      )}
+    </section>
+
+    <section aria-labelledby="related-title">
+      <h2 id="related-title">Related pages</h2>
+      <ul>
+        <li><a href={withBase('/invest/500-a-month-at-7-percent-for-30-years/')}>$500/month at 7% for 30 years</a></li>
+        <li><a href={withBase('/invest/1000-a-month-at-10-percent-for-40-years/')}>$1,000/month at 10% for 40 years</a></li>
+        <li><a href={withBase('/invest/')}>Browse all monthly investing results</a></li>
+        <li><a href={withBase('/rule-of-72/')}>Rule of 72: estimate doubling time</a></li>
+        <li><a href={withBase('/how-compound-interest-works/')}>How compound interest works</a></li>
+      </ul>
+    </section>
+
+    <Faq items={faqs} />
+  </article>
+
+  <MoreTools />
+</Base>
+
+<style>
+  .lead {
+    font-size: var(--text-lg);
+  }
+</style>

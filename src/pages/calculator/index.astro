@@ -1,0 +1,77 @@
+---
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import MoreTools from '../../components/MoreTools.astro';
+import LastUpdated from '../../components/LastUpdated.astro';
+import { site } from '../../site.config';
+import { datasetLd } from '../../lib/seo';
+import { withBase } from '../../lib/url';
+import { money } from '../../lib/format';
+import { CALC_AMOUNTS, CALC_RATES, CALC_YEARS, calcSlug } from '../../lib/pages';
+
+const title = 'Compound Interest Results by Amount, Rate and Years';
+const description = 'Browse pre-computed compound interest results for common amounts, rates and timeframes, or open the full calculator for contributions and inflation.';
+const pageCount = CALC_AMOUNTS.length * CALC_RATES.length * CALC_YEARS.length;
+---
+
+<Base
+  title={title}
+  description={description}
+  jsonLd={datasetLd({
+    name: 'Compoundly compound interest results (amount × rate × years)',
+    description: `${pageCount} pre-computed compound interest results for a one-time deposit, one page per amount/rate/years combination, each with a full year-by-year table.`,
+    url: '/calculator/',
+    keywords: ['compound interest', 'compound interest calculator', 'investment growth'],
+  })}
+>
+  <article class="container container--narrow section prose">
+    <Breadcrumbs items={[{ name: 'Home', url: '/' }, { name: 'Calculator', url: '/calculator/' }]} />
+    <h1>{title}</h1>
+    <LastUpdated date={site.launched} />
+    <p class="lead">
+      Each combination below is a fully computed, year-by-year compound interest result for a one-time deposit with
+      yearly compounding. Pick an amount to see every rate and timeframe, or use the
+      {' '}<a href={withBase('/')}>full calculator</a> for contributions, other compounding frequencies and inflation.
+    </p>
+
+    {CALC_AMOUNTS.map((amount) => (
+      <section aria-labelledby={`amt-${amount}`}>
+        <h2 id={`amt-${amount}`}>{money(amount, 'USD', 0)}</h2>
+        {CALC_RATES.map((rate) => (
+          <p class="calc-row">
+            <span class="calc-row__label">{rate}%:</span>{' '}
+            {CALC_YEARS.map((years, i) => (
+              <>
+                {i > 0 && ' · '}
+                <a href={withBase(`/calculator/${calcSlug(amount, rate, years)}/`)}>{years}y</a>
+              </>
+            ))}
+          </p>
+        ))}
+      </section>
+    ))}
+
+    <p>
+      Adding a monthly contribution? See the <a href={withBase('/invest/')}>monthly investing results</a> instead, or
+      read <a href={withBase('/how-compound-interest-works/')}>how compound interest works</a>.
+    </p>
+  </article>
+
+  <MoreTools />
+</Base>
+
+<style>
+  .lead {
+    font-size: var(--text-lg);
+  }
+  .calc-row {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-sm);
+  }
+  .calc-row__label {
+    display: inline-block;
+    width: 3.5rem;
+    color: var(--fg-muted);
+    font-weight: 600;
+  }
+</style>

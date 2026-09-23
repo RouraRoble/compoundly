@@ -1,0 +1,124 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import MoreTools from '../components/MoreTools.astro';
+import { site } from '../site.config';
+import { withBase } from '../lib/url';
+
+const title = `About ${site.name}`;
+const description = `How ${site.name} calculates compound interest: the exact formulas, compounding assumptions, sources and last-updated date.`;
+const lastUpdated = site.launched;
+---
+
+<Base title={title} description={description}>
+  <article class="container container--narrow section prose">
+    <Breadcrumbs items={[{ name: 'Home', url: '/' }, { name: 'About', url: '/about/' }]} />
+    <h1>{title}</h1>
+    <p class="muted small">Methodology last updated: <time datetime={lastUpdated}>{lastUpdated}</time></p>
+    <p>{site.description}</p>
+
+    <h2>What it does</h2>
+    <p>
+      Compoundly projects the future balance of up to three savings or investing plans — each with its own starting
+      amount, contribution, rate, compounding frequency, timeframe, contribution growth and inflation assumption — and
+      shows a year-by-year table, a chart, and the plain-English difference between plans. Every input is encoded in the
+      page's URL, so a link reproduces the exact comparison.
+    </p>
+
+    <h2>Methodology</h2>
+    <h3>Compounding</h3>
+    <p>
+      Interest compounds at the frequency you choose. With a nominal annual rate <code>r</code> compounded <code>n</code>
+      times a year, the balance is multiplied by <code>(1 + r/n)</code> at the end of each of the <code>n</code> periods.
+      Compounding frequencies use these period counts: daily = 365, monthly = 12, quarterly = 4, yearly = 1 (no leap-year
+      adjustment).
+    </p>
+    <h3>Contributions</h3>
+    <p>
+      Contributions are added at the <strong>end</strong> of each contribution period (an "ordinary annuity"), which
+      matches how most savings and brokerage accounts credit a deposit relative to when interest is calculated for that
+      period. If your contribution frequency (monthly or yearly) differs from the compounding frequency, the per-period
+      growth factor is converted to an equivalent rate over the contribution period, so the two stay mathematically
+      consistent at any combination.
+    </p>
+    <h3>Contribution increases</h3>
+    <p>
+      A "contribution increase" applies once per year, at the start of each new year: year <code>y</code>'s deposits equal
+      the base contribution × <code>(1 + increase%)^(y − 1)</code>. This models an annual raise applied to how much you set
+      aside, not a mid-year change.
+    </p>
+    <h3>Inflation and real value</h3>
+    <p>
+      When you set an inflation rate, the "real value" shown for each year is the nominal balance divided by
+      <code>(1 + inflation%)^y</code> — today's purchasing power of that year's balance. Inflation does not change the
+      nominal balance or the chart's main line; it only affects the real-value figures and the optional dashed line.
+    </p>
+    <h3>Day count and rounding</h3>
+    <p>
+      Daily compounding always uses 365 periods per year (no leap-day adjustment). All internal arithmetic uses standard
+      IEEE double-precision numbers; values are rounded only for display, using each currency's standard formatting via
+      the browser's <code>Intl.NumberFormat</code>.
+    </p>
+    <h3>Milestones</h3>
+    <p>
+      "First $X" milestones mark the first year the balance reaches a round threshold (10k, 25k, 50k, 100k, 250k, 500k,
+      1M, 2M, 5M, 10M, in the selected currency's units) above the starting amount. "Doubled / quadrupled" milestones mark
+      the first year the balance reaches 2× or 4× the total amount invested (starting amount plus contributions) at that
+      point — not 2× the starting amount alone.
+    </p>
+
+    <h2>Formulas and sources</h2>
+    <p>The two closed-form formulas used for the explainer pages and cross-checked against the calculator's year-by-year simulation:</p>
+    <ul>
+      <li><strong>Lump sum:</strong> <code>FV = P × (1 + r/n)^(n × t)</code> — the compound interest formula published by the {' '}
+        <a href="https://www.investor.gov/introduction-investing/investing-basics/compound-interest-calculator" rel="noopener">U.S. Securities and Exchange Commission's Investor.gov</a>.</li>
+      <li><strong>Regular contributions (ordinary annuity):</strong> <code>FV = C × [((1 + i)^N − 1) / i]</code>, where
+        <code>C</code> is the payment per period, <code>i</code> the period rate and <code>N</code> the number of periods —
+        the standard future-value-of-an-annuity formula, e.g. as presented in the Corporate Finance Institute's
+        {' '}<a href="https://corporatefinanceinstitute.com/resources/valuation/future-value-annuity-formula/" rel="noopener">Future Value of an Annuity</a> reference.</li>
+      <li><strong>Rule of 72 and exact doubling time:</strong> derived from <code>(1 + r)^t = 2</code>; see {' '}
+        <a href={withBase('/rule-of-72/')}>the rule of 72 page</a> for the full derivation.</li>
+      <li><strong>APY from APR:</strong> <code>APY = (1 + APR/n)^n − 1</code>; see {' '}
+        <a href={withBase('/apy-vs-apr/')}>APY vs APR</a>.</li>
+    </ul>
+    <p>Every formula is unit-tested in the source code against known reference values (e.g. $1,000 at 5% yearly for 10 years = $1,628.89).</p>
+
+    <h2>Known limitations</h2>
+    <ul>
+      <li>Rates are treated as constant for the entire timeframe. Real returns vary year to year; this is a projection of the math, not a forecast.</li>
+      <li>No taxes, account fees, or contribution limits (e.g. retirement account caps) are modelled.</li>
+      <li>Currency selection (USD/EUR/GBP) changes only the display symbol and formatting — there is no foreign-exchange conversion.</li>
+      <li>Years are capped at 80 and rates at ±50% to keep results numerically sane and the URL short; amounts are capped at 1,000,000,000.</li>
+    </ul>
+
+    <h2>Not financial advice</h2>
+    <p>
+      Compoundly is a calculator, not an advisor. It does not recommend a rate of return, a product, an account type or a
+      provider. Verify any number that matters with your own account statements or a qualified professional before
+      acting on it. See the <a href={withBase('/terms/')}>terms of use</a>.
+    </p>
+
+    <h2>Monetization</h2>
+    <p>
+      Compoundly may show a labelled advertising slot below the results, and an affiliate block ("Where to actually earn
+      this rate") pointing to a savings account or brokerage — both are optional, config-driven, and never change the
+      calculator's numbers. See <a href="https://github.com/RouraRoble" rel="noopener">the source</a> for exactly what is
+      wired up and what is a documented placeholder.
+    </p>
+
+    <h2>Privacy by design</h2>
+    <p>
+      {site.name} runs entirely in your browser. Inputs are not uploaded, no account is needed, and there are no tracking
+      cookies. See the <a href={withBase('/privacy/')}>privacy policy</a>.
+    </p>
+
+    <h2>Who maintains it</h2>
+    <p>
+      Built and maintained by <a href={site.author.url} rel="noopener">{site.author.name}</a>. Launched {site.launched}.
+      Found an error in the math or a source? <a href={withBase('/contact/')}>Get in touch</a> — data corrections are the
+      fastest thing we act on.
+    </p>
+  </article>
+
+  <MoreTools />
+</Base>

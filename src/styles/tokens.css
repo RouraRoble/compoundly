@@ -1,0 +1,91 @@
+/* Design tokens — Compoundly: financial but warm. Deep teal + antique gold, serif display headings. */
+:root {
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'DM Serif Display', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: clamp(1.5rem, 1.2rem + 1.2vw, 1.875rem);
+  --text-3xl: clamp(1.875rem, 1.4rem + 2vw, 2.5rem);
+  --text-4xl: clamp(2.25rem, 1.6rem + 3vw, 3.5rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --container: 72rem;
+  --container-narrow: 44rem;
+
+  /* Deep teal primary, antique gold as the sparing accent (milestones, highlights). */
+  --accent: #0f6f66;
+  --accent-contrast: #ffffff;
+  --gold: #c8952c;
+  --gold-contrast: #241a04;
+  --series-a: #0f6f66;
+  /* Darkened from --gold (#c8952c, ~2.5:1 on --bg) so the chart line/legend swatch clears ~3:1 on
+     the cream background — series are already distinguished by more than color (dashed real-value
+     line, end labels, data-table fallback), but this narrows the gap for anyone relying on hue. */
+  --series-b: #8a6218;
+  --series-c: #7b4fb0;
+  --bg: #fbf7ee;
+  --bg-elevated: #ffffff;
+  --bg-muted: #f1ead8;
+  --fg: #16231f;
+  --fg-muted: #52685f;
+  --border: #ddd3ba;
+  --border-strong: #c3b592;
+  --success: #157a5e;
+  --warning: #b45309;
+  --danger: #b3261e;
+  --shadow: 0 1px 2px rgb(22 35 31 / 0.07), 0 10px 28px -14px rgb(22 35 31 / 0.22);
+  --focus: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --accent: #35bdaa;
+    --accent-contrast: #0a1614;
+    --gold: #e0ab49;
+    --series-a: #35bdaa;
+    --series-b: #e0ab49;
+    --series-c: #a988e0;
+    --bg: #0d1917;
+    --bg-elevated: #12211e;
+    --bg-muted: #172a26;
+    --fg: #e9efe9;
+    --fg-muted: #9db3ab;
+    --border: #234139;
+    --border-strong: #325a4f;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 28px -14px rgb(0 0 0 / 0.6);
+  }
+}
+:root[data-theme='dark'] {
+  --accent: #35bdaa;
+  --accent-contrast: #0a1614;
+  --gold: #e0ab49;
+  --series-a: #35bdaa;
+  --series-b: #e0ab49;
+  --series-c: #a988e0;
+  --bg: #0d1917;
+  --bg-elevated: #12211e;
+  --bg-muted: #172a26;
+  --fg: #e9efe9;
+  --fg-muted: #9db3ab;
+  --border: #234139;
+  --border-strong: #325a4f;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 28px -14px rgb(0 0 0 / 0.6);
+}

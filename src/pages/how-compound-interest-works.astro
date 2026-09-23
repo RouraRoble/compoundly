@@ -1,0 +1,127 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Faq from '../components/Faq.astro';
+import MoreTools from '../components/MoreTools.astro';
+import LastUpdated from '../components/LastUpdated.astro';
+import { site } from '../site.config';
+import { articleLd, howToLd } from '../lib/seo';
+import { simulate } from '../lib/compound';
+import { money } from '../lib/format';
+import { withBase } from '../lib/url';
+
+const title = 'How Compound Interest Works (With an Example)';
+const description = 'Compound interest is interest earned on interest. Walk through a $1,000 example year by year, see the formula, and compare it to simple interest.';
+
+const example = simulate({ name: 'Example', initial: 1000, contribution: 0, frequency: 'y', rate: 5, compounding: 'y', years: 10, increase: 0, inflation: 0 });
+const simpleAt = (years: number) => 1000 + 1000 * 0.05 * years;
+
+const faqs = [
+  { q: 'What is compound interest, in one sentence?', a: 'It is interest calculated on both your original amount and on the interest you have already earned, so growth accelerates over time instead of staying flat.' },
+  { q: 'How is it different from simple interest?', a: 'Simple interest is always calculated on the original principal only, so it grows by the same dollar amount every period. Compound interest is calculated on principal plus all previously earned interest, so the dollar amount grows every period.' },
+  { q: 'Does compounding frequency matter much?', a: 'It matters, but less than the rate or the time horizon. Moving from yearly to daily compounding at a typical savings rate changes the outcome by a small percentage; moving from 5 to 20 years changes it dramatically. See the year-by-year table above.' },
+  { q: 'What is the exact formula?', a: 'Future value of a lump sum: FV = P × (1 + r/n)^(n × t), where P is the principal, r the nominal annual rate, n the compounding periods per year, and t the number of years. This is the same formula used by the U.S. SEC’s Investor.gov compound interest calculator.' },
+];
+---
+
+<Base
+  title={title}
+  description={description}
+  jsonLd={[
+    articleLd({ headline: title, description, url: '/how-compound-interest-works/', datePublished: site.launched, dateModified: site.launched }),
+    howToLd({
+      name: 'Calculate compound interest on a lump sum',
+      description: 'Project the future value of a one-time deposit using the compound interest formula.',
+      steps: [
+        { name: 'Identify the principal, rate, compounding and time', text: 'E.g. $1,000 at 5% per year, compounded yearly, for 10 years.' },
+        { name: 'Apply the formula', text: 'FV = P × (1 + r/n)^(n × t). With yearly compounding, n = 1, so FV = 1000 × 1.05^10.' },
+        { name: 'Read the result', text: 'FV ≈ $1,628.89 — the $628.89 gain is more than 5 × $50/yr because each year’s interest also earns interest.' },
+      ],
+      datePublished: site.launched,
+      dateModified: site.launched,
+    }),
+  ]}
+>
+  <article class="container container--narrow section prose">
+    <Breadcrumbs items={[{ name: 'Home', url: '/' }, { name: 'How compound interest works', url: '/how-compound-interest-works/' }]} />
+    <h1>{title}</h1>
+    <LastUpdated date={site.launched} />
+    <p class="lead">
+      <strong>Compound interest is interest paid on interest.</strong> Instead of earning a flat amount every period like
+      simple interest, each period's interest gets added to the balance — so the next period earns interest on a slightly
+      larger number. Over enough time, that difference compounds into a very different outcome.
+    </p>
+
+    <section aria-labelledby="example-title">
+      <h2 id="example-title">Worked example: $1,000 at 5% for 10 years</h2>
+      <p>
+        With yearly compounding, <strong>{money(1000)}</strong> at <strong>5%</strong> grows to
+        {' '}<strong>{money(example.finalBalance)}</strong> after 10 years — {money(example.totalInterest)} in interest, against
+        just {money(1000 * 0.05 * 10)} that simple interest would have paid on the same principal and rate.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Year</th>
+              <th scope="col">Compound interest balance</th>
+              <th scope="col">Simple interest balance</th>
+              <th scope="col">Gap</th>
+            </tr>
+          </thead>
+          <tbody>
+            {example.rows.map((row) => (
+              <tr>
+                <th scope="row">{row.year}</th>
+                <td>{money(row.balance)}</td>
+                <td>{money(simpleAt(row.year))}</td>
+                <td>{money(row.balance - simpleAt(row.year))}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted small">Compound: FV = 1000 × (1 + 0.05/1)^(1×t). Simple: FV = 1000 + 1000 × 0.05 × t. Both use the same principal and rate — only the interest treatment differs.</p>
+    </section>
+
+    <section aria-labelledby="formula-title">
+      <h2 id="formula-title">The formula</h2>
+      <p><code>FV = P × (1 + r/n)^(n × t)</code></p>
+      <ul>
+        <li><code>P</code> — principal (starting amount)</li>
+        <li><code>r</code> — nominal annual interest rate, as a decimal (5% = 0.05)</li>
+        <li><code>n</code> — compounding periods per year (1 yearly, 4 quarterly, 12 monthly, 365 daily)</li>
+        <li><code>t</code> — number of years</li>
+      </ul>
+      <p>
+        This is the formula published by the {' '}<a href="https://www.investor.gov/introduction-investing/investing-basics/compound-interest-calculator" rel="noopener">U.S. Securities and Exchange Commission's Investor.gov</a>{' '}
+        compound interest calculator. When you add regular contributions on top of a lump sum, the contributions follow the
+        future-value-of-an-annuity formula instead — see <a href={withBase('/about/')}>Compoundly's methodology</a> for both formulas and
+        the exact conventions (timing of deposits, day-count, rounding) used across this site.
+      </p>
+    </section>
+
+    <section aria-labelledby="try-title">
+      <h2 id="try-title">Try it with your own numbers</h2>
+      <p>
+        Use the <a href={withBase('/')}>comparison calculator</a> to project up to three scenarios with contributions, contribution
+        growth and inflation — or jump to a ready-made example such as
+        {' '}<a href={withBase('/calculator/10000-at-7-percent-for-20-years/')}>$10,000 at 7% for 20 years</a> or
+        {' '}<a href={withBase('/invest/500-a-month-at-7-percent-for-30-years/')}>$500/month at 7% for 30 years</a>.
+        For the doubling-time shortcut, see <a href={withBase('/rule-of-72/')}>the rule of 72</a>; for savings-account rates, see
+        {' '}<a href={withBase('/apy-vs-apr/')}>APY vs APR</a>; for a savings goal, see
+        {' '}<a href={withBase('/how-long-to-save-1-million/')}>how long it takes to save $1,000,000</a>.
+      </p>
+    </section>
+
+    <Faq items={faqs} />
+  </article>
+
+  <MoreTools />
+</Base>
+
+<style>
+  .lead {
+    font-size: var(--text-lg);
+  }
+</style>

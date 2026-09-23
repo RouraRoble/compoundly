@@ -1,0 +1,78 @@
+---
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import MoreTools from '../../components/MoreTools.astro';
+import LastUpdated from '../../components/LastUpdated.astro';
+import { site } from '../../site.config';
+import { datasetLd } from '../../lib/seo';
+import { withBase } from '../../lib/url';
+import { money } from '../../lib/format';
+import { INVEST_MONTHLY, INVEST_RATES, INVEST_YEARS, investSlug } from '../../lib/pages';
+
+const title = 'Monthly Investing Results by Amount, Rate and Years';
+const description = 'Browse pre-computed results for investing a fixed amount every month, or open the full calculator for lump sums, contribution growth and inflation.';
+const pageCount = INVEST_MONTHLY.length * INVEST_RATES.length * INVEST_YEARS.length;
+---
+
+<Base
+  title={title}
+  description={description}
+  jsonLd={datasetLd({
+    name: 'Compoundly monthly investing results (amount × rate × years)',
+    description: `${pageCount} pre-computed monthly-investing results, one page per monthly-amount/rate/years combination, each with a full year-by-year table.`,
+    url: '/invest/',
+    keywords: ['investment calculator', 'monthly investing', 'compound interest'],
+  })}
+>
+  <article class="container container--narrow section prose">
+    <Breadcrumbs items={[{ name: 'Home', url: '/' }, { name: 'Invest', url: '/invest/' }]} />
+    <h1>{title}</h1>
+    <LastUpdated date={site.launched} />
+    <p class="lead">
+      Each combination below is a fully computed, year-by-year result for investing a fixed amount every month, with
+      monthly compounding and deposits at the end of each month. Pick a monthly amount to see every rate and timeframe,
+      or use the <a href={withBase('/')}>full calculator</a> for lump sums, contribution increases and inflation.
+    </p>
+
+    {INVEST_MONTHLY.map((monthly) => (
+      <section aria-labelledby={`mo-${monthly}`}>
+        <h2 id={`mo-${monthly}`}>{money(monthly, 'USD', 0)}/month</h2>
+        {INVEST_RATES.map((rate) => (
+          <p class="calc-row">
+            <span class="calc-row__label">{rate}%:</span>{' '}
+            {INVEST_YEARS.map((years, i) => (
+              <>
+                {i > 0 && ' · '}
+                <a href={withBase(`/invest/${investSlug(monthly, rate, years)}/`)}>{years}y</a>
+              </>
+            ))}
+          </p>
+        ))}
+      </section>
+    ))}
+
+    <p>
+      Have a lump sum instead? See the <a href={withBase('/calculator/')}>compound interest results</a> instead, or
+      read <a href={withBase('/how-compound-interest-works/')}>how compound interest works</a>. Saving toward a round number?
+      See <a href={withBase('/how-long-to-save-1-million/')}>how long it takes to save $1,000,000</a>, by monthly amount and rate.
+    </p>
+  </article>
+
+  <MoreTools />
+</Base>
+
+<style>
+  .lead {
+    font-size: var(--text-lg);
+  }
+  .calc-row {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-sm);
+  }
+  .calc-row__label {
+    display: inline-block;
+    width: 3.5rem;
+    color: var(--fg-muted);
+    font-weight: 600;
+  }
+</style>
